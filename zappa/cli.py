@@ -151,6 +151,13 @@ class ZappaCLI:
             except KeyError:
                 raise ClickException("Cannot extend settings for undefined stage '" + stage + "'.")
 
+            # If a value in settings matches "${SECRET_ENV}" then
+            # pull value from os.environ.get('SECRET_ENV')
+            var_pattern = re.compile(r'\$\{[^}]+}')
+            env_settings = {k: os.environ.get(v[2:-1]) for k, v in stage_settings.items()
+                            if type(v) == str and var_pattern.match(v)}
+            stage_settings.update(env_settings)
+
             extends_stage = self.zappa_settings[stage].get("extends", None)
             if not extends_stage:
                 return stage_settings
